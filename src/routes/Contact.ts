@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getContacts } from "../controllers/Contact";
+import { createContact, getContacts } from "../controllers/Contact";
 
 const router = Router();
 
-// Auth
-router.post("/", getContacts);
+router.get("/", getContacts);
+router.post("/", createContact);
 
 export default router;
