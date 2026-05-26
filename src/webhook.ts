@@ -7,9 +7,10 @@ const router = express.Router();
 router.post("/github-webhook", (req, res) => {
   console.log("Webhook recibido de GitHub");
 
-  const gitCommand = `cd /home/mvpcampaign-api/htdocs/api.mvpcampaign.online/MVP-DxLatam-Backend && 
-    git config --local credential.helper '!f() { echo "username=${GITHUB_USERNAME}"; echo "password=${GITHUB_TOKEN}"; }; f' && 
-    git pull origin main && 
+  const gitCommand = `cd /home/mvpcampaign-api/htdocs/api.mvpcampaign.online/MVP-DxLatam-Backend &&
+    git config --local credential.helper '!f() { echo "username=${GITHUB_USERNAME}"; echo "password=${GITHUB_TOKEN}"; }; f' &&
+    git reset --hard HEAD &&
+    git pull origin main &&
     npm install &&
     npm run build &&
     pm2 restart mi-backend`;
