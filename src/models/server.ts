@@ -7,6 +7,7 @@ import { Server as SocketServer } from "socket.io";
 
 // Routes
 import AudienceRouter from "../routes/Audience";
+import CanvasRouter from "../routes/Canvas";
 import ContactsRouter from "../routes/Contact";
 
 // Database
@@ -66,6 +67,7 @@ class Server {
     });
     this.app.use("/api/contacts", ContactsRouter);
     this.app.use("/api/audience", AudienceRouter);
+    this.app.use("/api/canvas", CanvasRouter);
   }
 
   async dbConnect() {
