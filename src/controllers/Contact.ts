@@ -29,3 +29,49 @@ export const createContact = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateContact = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const contact = await Contact.findByPk(id);
+
+    if (!contact) {
+      return res.status(404).json({
+        error: "contact not found",
+      });
+    }
+
+    await contact.update(req.body);
+
+    res.json(contact);
+  } catch (error) {
+    res.status(400).json({
+      error: "validation error",
+    });
+  }
+};
+
+export const deleteContact = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const contact = await Contact.findByPk(id);
+
+    if (!contact) {
+      return res.status(404).json({
+        error: "contact not found",
+      });
+    }
+
+    await contact.destroy();
+
+    res.json({
+      message: "deleted",
+    });
+  } catch {
+    res.status(500).json({
+      error: "server error",
+    });
+  }
+};
