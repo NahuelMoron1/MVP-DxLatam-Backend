@@ -149,6 +149,7 @@ Query params for `GET /api/contacts`:
 - `page` (default: 1), `pageSize` (default: 20, max: 100)
 - `search` — matches first_name, last_name, email
 - `country`, `status`
+- `created_after` — ISO date string (e.g. `2025-04-26`), filters contacts created on or after that date
 
 ### Campaigns
 | Method | Path | Description |
@@ -229,11 +230,12 @@ Run `npm test` — 18 tests covering all operators, nested AND/OR, JSON attribut
 
 | Feature | Reason |
 |---|---|
-| Angular frontend | Backend-first decision to deliver a solid, tested core within 2 days |
-| Real SMS sending | Out of scope per spec — config is stored and ready to plug in a provider |
-| Authentication/authorization | Out of scope per spec — can be added as middleware |
-| Contact create/edit UI | Out of scope per spec — API endpoints are fully implemented |
-| `{{name}}` dynamic variables | Bonus feature, not required for the core |
+| Real SMS sending | Out of scope per spec — message config is stored in `CanvasNode.config` and ready to plug in a provider (Twilio, etc.) |
+| Authentication/authorization | Out of scope per spec — can be added as Express middleware (JWT + guard) |
+| `{{name}}` dynamic variables in SMS | Bonus B2, not required for the core |
 | Multi-tenancy, queues, scheduler | Explicitly out of scope per spec |
+| Field whitelist in audience endpoint | Documented as production improvement in ADR — acceptable for MVP |
 
 See [ADR.md](./ADR.md) for architecture decisions and production improvement roadmap.
+
+The Angular frontend is fully implemented — see `../MVP-Campaign/README.md`.

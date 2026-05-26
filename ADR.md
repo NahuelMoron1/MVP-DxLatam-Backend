@@ -2,11 +2,20 @@
 
 ## 1. Librería de canvas (frontend)
 
-**Decisión:** `@foblex/flow`
+**Decisión:** implementación propia — Angular standalone + SVG nativo + `@HostListener`
 
-Angular-native, compatible con standalone components y Signals (v17+). Evita wrappers sobre librerías JS vanilla y expone una API declarativa que encaja con el estado reactivo del frontend.
+No se usó ninguna librería externa de canvas. Los nodos son `div` absolutamente posicionados dentro de un contenedor de 2400×1400px; las aristas son paths SVG con curvas de Bézier cúbicas; el drag-and-drop se resuelve con `mousedown/mousemove/mouseup` capturados en `document` vía `@HostListener`.
 
-Alternativas descartadas: jsPlumb (requiere wrapper manual, sin tipos Angular), rete.js (API más compleja, comunidad chica), Angular CDK + SVG custom (viable pero mayor costo de desarrollo en 2 días).
+Alternativas evaluadas y descartadas:
+
+| Librería | Motivo de descarte |
+|---|---|
+| `@foblex/flow` | Capa de abstracción innecesaria para el alcance del MVP; añade ~200 KB al bundle |
+| `@swimlane/ngx-graph` | Orientado a visualización, no a edición interactiva de flujos |
+| `rete.js` | API compleja; integración Angular requiere wrapper adicional |
+| `jsPlumb` | Sin tipos Angular nativos; mayor fricción con el modelo de Signals |
+
+La implementación propia resultó más liviana (cero dependencias de canvas), más fácil de controlar (los nodos son HTML puro, estilizables con CSS), y suficiente para el alcance del MVP. El trade-off es mayor código inicial, que quedó acotado a un único componente (`canvas.component.ts`, ~450 líneas).
 
 ---
 
