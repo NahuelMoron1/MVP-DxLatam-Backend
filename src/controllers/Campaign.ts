@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Op, literal } from "sequelize";
+import { Op, WhereOptions, literal } from "sequelize";
 import Campaign from "../models/mysql/Campaign";
 
 export const getCampaigns = async (req: Request, res: Response) => {
@@ -11,16 +11,20 @@ export const getCampaigns = async (req: Request, res: Response) => {
     const search = req.query.search as string | undefined;
     const status = req.query.status as string | undefined;
 
-    const where: any = {};
+    const conditions: WhereOptions[] = [];
 
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { description: { [Op.like]: `%${search}%` } },
-      ];
+      conditions.push({
+        [Op.or]: [
+          { name: { [Op.like]: `%${search}%` } },
+          { description: { [Op.like]: `%${search}%` } },
+        ],
+      });
     }
 
-    if (status) where.status = status;
+    if (status) conditions.push({ status });
+
+    const where: WhereOptions = conditions.length > 0 ? { [Op.and]: conditions } : {};
 
     const { count, rows } = await Campaign.findAndCountAll({
       where,
@@ -52,7 +56,12 @@ export const getCampaigns = async (req: Request, res: Response) => {
 
 export const createCampaign = async (req: Request, res: Response) => {
   try {
-    const campaign = await Campaign.create(req.body);
+    const { name, description, status } = req.body as {
+      name: string;
+      description?: string;
+      status?: string;
+    };
+    const campaign = await Campaign.create({ name, description, status });
     return res.status(201).json(campaign);
   } catch {
     return res.status(400).json({
@@ -93,7 +102,16 @@ export const updateCampaign = async (req: Request, res: Response) => {
       });
     }
 
-    await campaign.update(req.body);
+    const { name, description, status } = req.body as {
+      name?: string;
+      description?: string;
+      status?: string;
+    };
+    const updates: { name?: string; description?: string; status?: string } = {};
+    if (name !== undefined) updates.name = name;
+    if (description !== undefined) updates.description = description;
+    if (status !== undefined) updates.status = status;
+    await campaign.update(updates);
     return res.json(campaign);
   } catch {
     return res.status(400).json({
