@@ -20,9 +20,12 @@ export const createContact = async (req: Request, res: Response) => {
     const contact = await Contact.create(req.body);
 
     return res.status(201).json(contact);
-  } catch (error) {
+  } catch (error: any) {
+    console.error(error);
+
     res.status(400).json({
-      error: "validation error",
+      error: error.message,
+      details: error.errors?.map((e: any) => e.message),
     });
   }
 };

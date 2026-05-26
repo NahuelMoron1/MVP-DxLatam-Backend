@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { Server as SocketServer } from "socket.io";
 
 // Routes
+import AudienceRouter from "../routes/Audience";
 import ContactsRouter from "../routes/Contact";
 
 // Database
@@ -36,21 +37,8 @@ class Server {
 
     this.middlewares();
     this.routes();
-    this.sockets();
     this.dbConnect();
     this.listen();
-  }
-
-  sockets() {
-    this.io.on("connection", (socket) => {
-      socket.on("joinRoom", (deviceKey: string) => {
-        socket.join(deviceKey);
-      });
-
-      socket.on("disconnect", () => {});
-    });
-
-    this.app.set("socketio", this.io);
   }
 
   listen() {
@@ -77,6 +65,7 @@ class Server {
       res.json({ msg: "API working" });
     });
     this.app.use("/api/contacts", ContactsRouter);
+    this.app.use("/api/audience", AudienceRouter);
   }
 
   async dbConnect() {
