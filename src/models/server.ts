@@ -1,4 +1,3 @@
-import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import http from "http";
@@ -51,7 +50,6 @@ class Server {
         credentials: true,
       }),
     );
-    this.app.use(cookieParser());
   }
 
   routes() {

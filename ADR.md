@@ -31,11 +31,11 @@ Trade-off aceptado: no hay type-safety a nivel DB y los índices sobre JSON son 
 
 ## 3. Prevención de inyección SQL
 
-**Decisión:** SQL parametrizado con `?` placeholders vía `db.query(sql, { replacements })`
+**Decisión:** SQL parametrizado con `?` placeholders vía `db.query(sql, { replacements })` + whitelist de campos en el endpoint de audiencia.
 
 El motor de filtros (`buildWhereClause.ts`) construye el árbol WHERE recursivamente pero **nunca concatena valores del usuario al string SQL**. Todos los valores van como `replacements`, que Sequelize pasa al driver MySQL como prepared statements.
 
-El riesgo residual es el campo `field` del filtro (nombre de columna), que actualmente se interpola directamente. Para producción: agregar whitelist de campos permitidos en el endpoint de audiencia antes de llamar a `buildWhereClause`.
+El campo `field` (nombre de columna) se valida contra una whitelist explícita antes de llegar a `buildWhereClause`: columnas directas de la tabla Contacts (`first_name`, `last_name`, `phone`, `email`, `country`, `city`, `status`, `created_at`) y el patrón `attributes.<identificador>`. Cualquier campo no permitido lanza un error capturado como `400 INVALID_FILTERS`.
 
 Los tests en `BuildWhereClause.test.ts` verifican explícitamente que inputs maliciosos quedan en `replacements` y no en el string SQL.
 

@@ -4,6 +4,35 @@ import { buildWhereClause } from "../helpers/BuildWhereClause";
 import { resolveTemplate } from "../helpers/resolveTemplate";
 import CanvasNode from "../models/mysql/CanvasNode";
 
+const ALLOWED_FIELDS = new Set([
+  "first_name",
+  "last_name",
+  "phone",
+  "email",
+  "country",
+  "city",
+  "status",
+  "created_at",
+]);
+
+function validateFilterFields(filter: Record<string, unknown>): void {
+  if ("op" in filter && Array.isArray(filter["conditions"])) {
+    for (const child of filter["conditions"] as Record<string, unknown>[]) {
+      validateFilterFields(child);
+    }
+    return;
+  }
+  if ("field" in filter) {
+    const field = filter["field"] as string;
+    const isAllowed =
+      ALLOWED_FIELDS.has(field) ||
+      /^attributes\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(field);
+    if (!isAllowed) {
+      throw new Error(`Field '${field}' is not allowed`);
+    }
+  }
+}
+
 export const getAudience = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -24,7 +53,10 @@ export const getAudience = async (req: Request, res: Response) => {
     // Body filters for live preview; fall back to node's stored config
     const rawFilters =
       Object.keys(bodyFilters).length > 0 ? bodyFilters : node.get("config");
-    // Cast is safe: buildWhereClause validates the shape at runtime
+
+    validateFilterFields(rawFilters as Record<string, unknown>);
+
+    // Cast is safe: structure validated above and at runtime by buildWhereClause
     const filters = rawFilters as Parameters<typeof buildWhereClause>[0];
 
     const { where, replacements } = buildWhereClause(filters);
