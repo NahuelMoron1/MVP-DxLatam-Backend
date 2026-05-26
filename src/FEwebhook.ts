@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/github-webhook", (req, res) => {
   console.log("FE Webhook recibido de GitHub");
 
-  const gitCommand = `./src/fe_deploy.sh mvpcampaign ${SSH_IP} "${SSH_PASSWORD}" ${GITHUB_USERNAME} ${GITHUB_TOKEN}`;
+  const gitCommand = `bash src/fe_deploy.sh mvpcampaign ${SSH_IP} "${SSH_PASSWORD}" ${GITHUB_USERNAME} ${GITHUB_TOKEN}`;
 
   const child = exec(gitCommand, { timeout: 60000 }, (err, stdout, stderr) => {
     if (stderr) console.log("STDERR:", stderr);
