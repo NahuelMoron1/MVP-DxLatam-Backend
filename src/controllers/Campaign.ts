@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Op } from "sequelize";
+import { Op, literal } from "sequelize";
 import Campaign from "../models/mysql/Campaign";
 
 export const getCampaigns = async (req: Request, res: Response) => {
@@ -24,6 +24,14 @@ export const getCampaigns = async (req: Request, res: Response) => {
 
     const { count, rows } = await Campaign.findAndCountAll({
       where,
+      attributes: {
+        include: [
+          [
+            literal('(SELECT COUNT(*) FROM CanvasNodes WHERE CanvasNodes.campaign_id = Campaigns.id)'),
+            'node_count',
+          ],
+        ],
+      },
       limit: pageSize,
       offset,
       order: [["created_at", "DESC"]],

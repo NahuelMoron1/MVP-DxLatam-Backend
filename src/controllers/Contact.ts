@@ -11,6 +11,7 @@ export const getContacts = async (req: Request, res: Response) => {
     const search = req.query.search as string | undefined;
     const country = req.query.country as string | undefined;
     const status = req.query.status as string | undefined;
+    const created_after = req.query.created_after as string | undefined;
 
     // any is justified: Sequelize WhereOptions doesn't expose symbol keys cleanly in TS
     const where: any = {};
@@ -25,6 +26,7 @@ export const getContacts = async (req: Request, res: Response) => {
 
     if (country) where.country = country;
     if (status) where.status = status;
+    if (created_after) where.created_at = { [Op.gte]: new Date(created_after) };
 
     const { count, rows } = await Contact.findAndCountAll({
       where,
