@@ -3,7 +3,6 @@ import cors from "cors";
 import express, { Application, Request, Response } from "express";
 import http from "http";
 import morgan from "morgan";
-import { Server as SocketServer } from "socket.io";
 
 // Routes
 import AudienceRouter from "../routes/Audience";
@@ -21,21 +20,12 @@ class Server {
   private app: Application;
   private port?: string;
   private server: http.Server;
-  private io: SocketServer;
 
   constructor() {
     this.app = express();
     this.port = PORT;
 
     this.server = http.createServer(this.app);
-
-    this.io = new SocketServer(this.server, {
-      cors: {
-        origin: ALLOWED_ORIGINS,
-        methods: ["GET", "POST"],
-        credentials: true,
-      },
-    });
 
     this.middlewares();
     this.routes();
