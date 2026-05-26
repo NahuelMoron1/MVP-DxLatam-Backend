@@ -1,16 +1,43 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
 import Campaign from "../models/mysql/Campaign";
 
 export const getCampaigns = async (req: Request, res: Response) => {
   try {
-    const campaigns = await Campaign.findAll();
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
+    const offset = (page - 1) * pageSize;
 
-    res.json({
-      data: campaigns,
+    const search = req.query.search as string | undefined;
+    const status = req.query.status as string | undefined;
+
+    const where: any = {};
+
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    if (status) where.status = status;
+
+    const { count, rows } = await Campaign.findAndCountAll({
+      where,
+      limit: pageSize,
+      offset,
+      order: [["created_at", "DESC"]],
+    });
+
+    return res.json({
+      data: rows,
+      page,
+      pageSize,
+      total: count,
     });
   } catch {
-    res.status(500).json({
-      error: "server error",
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: "Internal server error" },
     });
   }
 };
@@ -18,11 +45,10 @@ export const getCampaigns = async (req: Request, res: Response) => {
 export const createCampaign = async (req: Request, res: Response) => {
   try {
     const campaign = await Campaign.create(req.body);
-
-    res.status(201).json(campaign);
-  } catch (error) {
-    res.status(400).json({
-      error: "validation error",
+    return res.status(201).json(campaign);
+  } catch {
+    return res.status(400).json({
+      error: { code: "VALIDATION_ERROR", message: "Invalid campaign data" },
     });
   }
 };
@@ -30,21 +56,20 @@ export const createCampaign = async (req: Request, res: Response) => {
 export const getCampaignById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const campaign = await Campaign.findByPk(id, {
       include: ["nodes", "edges"],
     });
 
     if (!campaign) {
       return res.status(404).json({
-        error: "campaign not found",
+        error: { code: "NOT_FOUND", message: "Campaign not found" },
       });
     }
 
-    res.json(campaign);
+    return res.json(campaign);
   } catch {
-    res.status(500).json({
-      error: "server error",
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: "Internal server error" },
     });
   }
 };
@@ -52,21 +77,19 @@ export const getCampaignById = async (req: Request, res: Response) => {
 export const updateCampaign = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const campaign = await Campaign.findByPk(id);
 
     if (!campaign) {
       return res.status(404).json({
-        error: "campaign not found",
+        error: { code: "NOT_FOUND", message: "Campaign not found" },
       });
     }
 
     await campaign.update(req.body);
-
-    res.json(campaign);
+    return res.json(campaign);
   } catch {
-    res.status(400).json({
-      error: "validation error",
+    return res.status(400).json({
+      error: { code: "VALIDATION_ERROR", message: "Invalid campaign data" },
     });
   }
 };
@@ -74,23 +97,19 @@ export const updateCampaign = async (req: Request, res: Response) => {
 export const deleteCampaign = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const campaign = await Campaign.findByPk(id);
 
     if (!campaign) {
       return res.status(404).json({
-        error: "campaign not found",
+        error: { code: "NOT_FOUND", message: "Campaign not found" },
       });
     }
 
     await campaign.destroy();
-
-    res.json({
-      message: "deleted",
-    });
+    return res.json({ message: "deleted" });
   } catch {
-    res.status(500).json({
-      error: "server error",
+    return res.status(500).json({
+      error: { code: "SERVER_ERROR", message: "Internal server error" },
     });
   }
 };

@@ -24,9 +24,9 @@ export const getAudience = async (req: Request, res: Response) => {
       count: contacts.length,
       contacts,
     });
-  } catch (error) {
+  } catch {
     return res.status(400).json({
-      error: "invalid filters",
+      error: { code: "INVALID_FILTERS", message: "Invalid filter tree" },
     });
   }
 };

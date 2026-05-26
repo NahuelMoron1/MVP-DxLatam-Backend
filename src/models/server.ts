@@ -14,6 +14,9 @@ import ContactsRouter from "../routes/Contact";
 import db from "../db/connection";
 import { ALLOWED_ORIGINS, DB_NAME, PORT } from "./config";
 
+// Associations — must be imported after models are loaded
+import "../models/mysql/Associations";
+
 // Models - Ensure proper initialization
 
 class Server {
@@ -53,7 +56,7 @@ class Server {
   }
 
   routes() {
-    this.app.get("/", (req: Request, res: Response) => {
+    this.app.get("/", (_req: Request, res: Response) => {
       res.json({ msg: "API working" });
     });
     this.app.use("/api/contacts", ContactsRouter);
