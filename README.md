@@ -2,6 +2,8 @@
 
 MVP of a campaign automation platform with dynamic contact segmentation and visual flow canvas.
 
+**Production API:** https://api.mvpcampaign.online · **Frontend:** https://www.mvpcampaign.online
+
 ## Stack
 
 | Layer | Technology |
@@ -52,6 +54,10 @@ npm start
 | `DB_PASSWORD` | MySQL password | `yourpassword` |
 | `DB_NAME` | Database name | `campaign_flow_builder` |
 | `ALLOWED_ORIGINS` | CORS allowed origins (comma-separated) | `http://localhost:4200` |
+| `GITHUB_USERNAME` | GitHub username for webhook deploys | `NahuelMoron1` |
+| `GITHUB_TOKEN` | GitHub personal access token for webhook deploys | `ghp_...` |
+| `SSH_IP` | IP of the frontend host (for FE webhook deploy) | `123.45.67.89` |
+| `SSH_PASSWORD` | SSH password for the frontend host | `yourpassword` |
 
 ---
 
@@ -74,13 +80,14 @@ npm start
 ```
 src/
 ├── controllers/
-│   ├── Audience.ts     — Segment audience resolution
+│   ├── Audience.ts     — Segment audience resolution + template preview
 │   ├── Campaign.ts     — Campaign CRUD
 │   ├── Canvas.ts       — Canvas persistence (transactional)
 │   └── Contact.ts      — Contact CRUD + pagination/search/filters
 ├── helpers/
-│   └── BuildWhereClause.ts   — Dynamic SQL filter engine
-│   └── BuildWhereClause.test.ts
+│   ├── BuildWhereClause.ts        — Dynamic SQL filter engine
+│   ├── BuildWhereClause.test.ts   — 18 unit tests
+│   └── resolveTemplate.ts         — {{name}}/{{country}}/{{city}} resolver + XSS sanitizer
 ├── models/
 │   ├── mysql/
 │   │   ├── Associations.ts
@@ -97,6 +104,8 @@ src/
 ├── db/
 │   ├── connection.ts
 │   └── sequelize-config.js
+├── webhook.ts      — Backend auto-deploy via GitHub webhook
+├── FEwebhook.ts    — Frontend auto-deploy via GitHub webhook
 └── seed.ts
 migrations/
 ├── 20240101000001-create-contacts.js
@@ -125,13 +134,20 @@ migrations/
 | deleted_at | DATETIME | Soft delete via Sequelize `paranoid` |
 
 ### Campaigns
-`id`, `name`, `description`, `status` (draft/active), `created_at`, `deleted_at`
+| Field | Type | Notes |
+|---|---|---|
+| id | VARCHAR(36) PK | UUID |
+| name | VARCHAR(255) | Required |
+| description | TEXT | Optional |
+| status | ENUM('draft','active') | Indexed |
+| created_at | DATETIME | Indexed |
+| deleted_at | DATETIME | Soft delete via Sequelize `paranoid` |
 
 ### CanvasNodes
-`id`, `campaign_id` (FK), `type` (segment/sms), `x`, `y`, `config` (JSON)
+`id`, `campaign_id` (FK → Campaigns), `type` ENUM('segment','sms'), `x`, `y`, `config` (JSON), `created_at`
 
 ### CanvasEdges
-`id`, `campaign_id` (FK), `source_node_id` (FK → CanvasNodes), `target_node_id` (FK → CanvasNodes)
+`id`, `campaign_id` (FK → Campaigns), `source_node_id` (FK → CanvasNodes), `target_node_id` (FK → CanvasNodes), `created_at`
 
 ---
 
@@ -161,12 +177,41 @@ Query params for `GET /api/contacts`:
 | `DELETE` | `/api/campaigns/:id` | Delete |
 | `PUT` | `/api/campaigns/:id/canvas` | Save canvas (atomic transaction) |
 
+`GET /api/campaigns` includes a `node_count` virtual field per campaign computed via subquery.
+
 ### Segments
 | Method | Path | Description |
 |---|---|---|
 | `POST` | `/api/segments/:id/audience` | Resolve dynamic filters, return matching contacts |
 
-Body: filter tree (see filter engine section). Falls back to the segment node's stored config if body is empty.
+**Request body:** filter tree (see filter engine section). Falls back to the segment node's stored config if body is empty.
+
+Optional field `preview_message` (string): if provided, the response includes `preview_messages` — an array of up to 3 resolved messages where `{{name}}`, `{{country}}`, and `{{city}}` are substituted with real contact data and sanitized against XSS.
+
+```json
+{
+  "op": "AND",
+  "conditions": [...],
+  "preview_message": "Hola {{name}}, tienes una oferta en {{country}}"
+}
+```
+
+Response:
+```json
+{
+  "count": 42,
+  "contacts": [...],
+  "preview_messages": ["Hola María, tienes una oferta en GT", "..."]
+}
+```
+
+### Webhooks (CI/CD)
+| Method | Path | Description |
+|---|---|---|
+| `POST` | `/webhook/github-webhook` | Pull + build + restart backend on push to main |
+| `POST` | `/fewebhook/github-webhook` | SSH into frontend host + pull + build frontend on push to main |
+
+Both endpoints are registered in GitHub as webhook receivers. On every push to `main` they automate the full deploy pipeline, keeping production always in sync with the repository.
 
 ### Response contracts
 
@@ -191,6 +236,8 @@ HTTP status codes: `201` create · `400` validation · `404` not found · `409` 
 **Supported operators:** `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `in`, `contains`
 
 **Supports:** `AND`/`OR` logical groups, nested groups, dynamic JSON attributes (`attributes.age`, `attributes.plan`, etc.)
+
+**Field whitelist:** before the filter tree reaches `buildWhereClause`, the `Audience` controller validates every `field` value against an explicit allowlist (`first_name`, `last_name`, `phone`, `email`, `country`, `city`, `status`, `created_at`) plus the pattern `/^attributes\.[a-zA-Z_][a-zA-Z0-9_]*$/`. Any unlisted field returns `400 INVALID_FILTERS`.
 
 **Example:**
 ```json
@@ -224,6 +271,9 @@ Run `npm test` — 18 tests covering all operators, nested AND/OR, JSON attribut
 | 4 | SMS node config (stored in canvas node `config` JSON) | ✅ |
 | 5 | Filter engine tests (18 tests) + ADR.md | ✅ |
 
+**Bonus implemented:**
+- B2 · `{{name}}`, `{{country}}`, `{{city}}` resolved via `resolveTemplate.ts` + XSS sanitization ✅
+
 ---
 
 ## What was left out and why
@@ -232,9 +282,7 @@ Run `npm test` — 18 tests covering all operators, nested AND/OR, JSON attribut
 |---|---|
 | Real SMS sending | Out of scope per spec — message config is stored in `CanvasNode.config` and ready to plug in a provider (Twilio, etc.) |
 | Authentication/authorization | Out of scope per spec — can be added as Express middleware (JWT + guard) |
-| `{{name}}` dynamic variables in SMS | Bonus B2, not required for the core |
 | Multi-tenancy, queues, scheduler | Explicitly out of scope per spec |
-| Field whitelist in audience endpoint | Documented as production improvement in ADR — acceptable for MVP |
 
 See [ADR.md](./ADR.md) for architecture decisions and production improvement roadmap.
 
