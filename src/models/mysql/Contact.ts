@@ -25,6 +25,7 @@ const Contact = db.define(
       allowNull: false,
       validate: {
         notEmpty: true,
+        is: /^\+?[\d\s\-(). ]{6,20}$/,
       },
     },
 

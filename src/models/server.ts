@@ -7,7 +7,6 @@ import morgan from "morgan";
 // Routes
 import AudienceRouter from "../routes/Audience";
 import CampaignRouter from "../routes/Campaign";
-import CanvasRouter from "../routes/Canvas";
 import ContactsRouter from "../routes/Contact";
 
 // Database
@@ -60,8 +59,7 @@ class Server {
       res.json({ msg: "API working" });
     });
     this.app.use("/api/contacts", ContactsRouter);
-    this.app.use("/api/audience", AudienceRouter);
-    this.app.use("/api/canvas", CanvasRouter);
+    this.app.use("/api/segments", AudienceRouter);
     this.app.use("/api/campaigns", CampaignRouter);
   }
 

@@ -1,9 +1,4 @@
-import { Router } from "express";
-import { getCampaignById, saveCanvas } from "../controllers/Canvas";
-
-const router = Router();
-
-router.put("/:id/canvas", saveCanvas);
-router.get("/:id", getCampaignById);
-
-export default router;
+// Canvas persistence is registered on the Campaign router:
+//   PUT /api/campaigns/:id/canvas  →  Canvas.saveCanvas
+// This file is no longer in use.
+export {};
