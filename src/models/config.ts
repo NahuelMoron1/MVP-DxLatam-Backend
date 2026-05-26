@@ -11,3 +11,7 @@ export const DB_PORT: number = parseInt(process.env.DB_PORT || "0");
 export const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
   : [];
+export const GITHUB_TOKEN = process.env.GITHUB_TOKEN as string;
+export const GITHUB_USERNAME = process.env.GITHUB_USERNAME as string;
+export const SSH_PASSWORD = process.env.SSH_PASSWORD as string;
+export const SSH_IP = process.env.SSH_IP as string;

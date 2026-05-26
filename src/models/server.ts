@@ -4,9 +4,11 @@ import http from "http";
 import morgan from "morgan";
 
 // Routes
+import FEwebhookRouter from "../FEwebhook";
 import AudienceRouter from "../routes/Audience";
 import CampaignRouter from "../routes/Campaign";
 import ContactsRouter from "../routes/Contact";
+import webhookRouter from "../webhook";
 
 // Database
 import db from "../db/connection";
@@ -43,6 +45,8 @@ class Server {
   middlewares() {
     this.app.use(express.json());
     this.app.use(morgan("dev"));
+    this.app.use("/webhook", webhookRouter);
+    this.app.use("/fewebhook", FEwebhookRouter);
     this.app.use(
       cors({
         origin: ALLOWED_ORIGINS,
