@@ -19,7 +19,7 @@ fi
 if command -v sshpass >/dev/null 2>&1; then
     echo "Usando sshpass..."
     sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $SSH_USER@$SSH_IP << EOF
-cd /home/pdk1gameprivate/htdocs/www.pdk1gameprivate.online
+cd /home/mvpcampaign/htdocs/www.mvpcampaign.online
 # Verificar el estado actual del repositorio
 echo "Estado del repositorio:"
 git status
@@ -27,7 +27,7 @@ echo "Remotes configurados:"
 git remote -v
 # Configurar git con credenciales directas
 echo "Configurando remote con credenciales..."
-git remote set-url origin https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/Paddock1-Private-FE-Builder.git
+git remote set-url origin https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/MVP-DxLatam-FE-Builder.git
 echo "Haciendo pull..."
 git pull origin main
 echo "Git pull completado exitosamente"
@@ -45,7 +45,7 @@ spawn ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 $SSH_USER@$SSH_IP
 expect "password:"
 send "$SSH_PASSWORD\r"
 expect "*\$ "
-send "cd /home/pdk1gameprivate/htdocs/www.pdk1gameprivate.online\r"
+send "cd /home/mvpcampaign/htdocs/www.mvpcampaign.online\r"
 expect "*\$ "
 send "echo 'Estado del repositorio:'\r"
 expect "*\$ "
@@ -57,7 +57,7 @@ send "git remote -v\r"
 expect "*\$ "
 send "echo 'Configurando remote con credenciales...'\r"
 expect "*\$ "
-send "git remote set-url origin https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/Paddock1-Private-FE-Builder.git\r"
+send "git remote set-url origin https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/MVP-DxLatam-FE-Builder.git\r"
 expect "*\$ "
 send "echo 'Haciendo pull...'\r"
 expect "*\$ "
